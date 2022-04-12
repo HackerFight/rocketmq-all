@@ -70,6 +70,7 @@ public class DefaultMessageStore implements MessageStore {
     // CommitLog
     private final CommitLog commitLog;
 
+    //TODO： 一个queueid 对应一个 ConsumeqQueue, ConsumeQueue内部有很多文件MappedFile
     private final ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
 
     private final FlushConsumeQueueService flushConsumeQueueService;
@@ -1925,6 +1926,8 @@ public class DefaultMessageStore implements MessageStore {
                     this.reputFromOffset, DefaultMessageStore.this.commitLog.getMinOffset());
                 this.reputFromOffset = DefaultMessageStore.this.commitLog.getMinOffset();
             }
+
+            //TODO: 一直到最后一个 CommitLog 文件的最大有效数据的位置
             for (boolean doNext = true; this.isCommitLogAvailable() && doNext; ) {
 
                 if (DefaultMessageStore.this.getMessageStoreConfig().isDuplicationEnable()
@@ -1932,20 +1935,28 @@ public class DefaultMessageStore implements MessageStore {
                     break;
                 }
 
+                //TODO:今后偏移量开始找到这个 CommitLog 文件的全部数据
                 SelectMappedBufferResult result = DefaultMessageStore.this.commitLog.getData(reputFromOffset);
                 if (result != null) {
                     try {
+                        //TODO: 标记启示位置
                         this.reputFromOffset = result.getStartOffset();
 
                         for (int readSize = 0; readSize < result.getSize() && doNext; ) {
+                            //TODO: 读出一条消息体内容
                             DispatchRequest dispatchRequest =
                                 DefaultMessageStore.this.commitLog.checkMessageAndReturnSize(result.getByteBuffer(), false, false);
+                            //TODO: 消息大小
                             int size = dispatchRequest.getBufferSize() == -1 ? dispatchRequest.getMsgSize() : dispatchRequest.getBufferSize();
 
+                            //TODO : 如果读取成功
                             if (dispatchRequest.isSuccess()) {
+                                //TODO: 表示有消息
                                 if (size > 0) {
+                                    //TODO: 开始处理 consumequeue 和 indexFile
                                     DefaultMessageStore.this.doDispatch(dispatchRequest);
 
+                                    //TODO: 这里暂时忽略
                                     if (BrokerRole.SLAVE != DefaultMessageStore.this.getMessageStoreConfig().getBrokerRole()
                                             && DefaultMessageStore.this.brokerConfig.isLongPollingEnable()
                                             && DefaultMessageStore.this.messageArrivingListener != null) {
@@ -1955,7 +1966,10 @@ public class DefaultMessageStore implements MessageStore {
                                             dispatchRequest.getBitMap(), dispatchRequest.getPropertiesMap());
                                     }
 
+                                    //TODO: size就是一个消息体的大小，这样可以顺延到第二个消息的偏移量
                                     this.reputFromOffset += size;
+
+                                    //TODO: 已经读过了的消息
                                     readSize += size;
                                     if (DefaultMessageStore.this.getMessageStoreConfig().getBrokerRole() == BrokerRole.SLAVE) {
                                         DefaultMessageStore.this.storeStatsService
@@ -1965,6 +1979,7 @@ public class DefaultMessageStore implements MessageStore {
                                             .addAndGet(dispatchRequest.getMsgSize());
                                     }
                                 } else if (size == 0) {
+                                    //TODO: 如果没有消息，则切换到下一个文件
                                     this.reputFromOffset = DefaultMessageStore.this.commitLog.rollNextFile(this.reputFromOffset);
                                     readSize = result.getSize();
                                 }

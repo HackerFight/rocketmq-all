@@ -152,8 +152,10 @@ public class CommitLog {
 
     public SelectMappedBufferResult getData(final long offset, final boolean returnFirstOnNotFound) {
         int mappedFileSize = this.defaultMessageStore.getMessageStoreConfig().getMappedFileSizeCommitLog();
+        //TODO: 根据offset 找到mappedFile 文件
         MappedFile mappedFile = this.mappedFileQueue.findMappedFileByOffset(offset, returnFirstOnNotFound);
         if (mappedFile != null) {
+            //TODO:第一个commitlog文件这里其实就是offset，从第二个开始就不一样了
             int pos = (int) (offset % mappedFileSize);
             SelectMappedBufferResult result = mappedFile.selectMappedBuffer(pos);
             return result;
@@ -269,6 +271,7 @@ public class CommitLog {
 
             int flag = byteBuffer.getInt();
 
+            //TODO: consumequeue 中的索引单元的offset,  offset * 20 就是在consumequeue 文件中的真实位置
             long queueOffset = byteBuffer.getLong();
 
             long physicOffset = byteBuffer.getLong();
@@ -348,6 +351,7 @@ public class CommitLog {
                             delayLevel = this.defaultMessageStore.getScheduleMessageService().getMaxDelayLevel();
                         }
 
+                        //TODO: 如果是延迟消息，则将消息索引单元的 tag hashcode 替换为 投递时间
                         if (delayLevel > 0) {
                             tagsCode = this.defaultMessageStore.getScheduleMessageService().computeDeliverTimestamp(delayLevel,
                                 storeTimestamp);
@@ -1622,6 +1626,7 @@ public class CommitLog {
             // 5 FLAG
             this.msgStoreItemMemory.putInt(msgInner.getFlag());
             // 6 QUEUEOFFSET
+            // TODO: 存放的是offset, offset * 20 就可以定位在consumequeue中的实际位置
             this.msgStoreItemMemory.putLong(queueOffset);
             // 7 PHYSICALOFFSET
             this.msgStoreItemMemory.putLong(fileFromOffset + byteBuffer.position());

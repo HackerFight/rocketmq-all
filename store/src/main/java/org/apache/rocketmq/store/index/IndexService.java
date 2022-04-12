@@ -327,6 +327,7 @@ public class IndexService {
                 this.readWriteLock.writeLock().unlock();
             }
 
+            //TODO: 如果新建了一个文件，则将上一个写满的文件进行异步刷盘
             if (indexFile != null) {
                 final IndexFile flushThisFile = prevIndexFile;
                 Thread flushThread = new Thread(new Runnable() {

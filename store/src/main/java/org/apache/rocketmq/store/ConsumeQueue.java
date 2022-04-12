@@ -432,16 +432,20 @@ public class ConsumeQueue {
 
         this.byteBufferIndex.flip();
         this.byteBufferIndex.limit(CQ_STORE_UNIT_SIZE);
+
+        //TODO: 将数据放入缓冲区
         this.byteBufferIndex.putLong(offset);
         this.byteBufferIndex.putInt(size);
         this.byteBufferIndex.putLong(tagsCode);
 
         final long expectLogicOffset = cqOffset * CQ_STORE_UNIT_SIZE;
 
+        //TODO: 根据索引单元的实际物理偏移量获取索引单元文件
         MappedFile mappedFile = this.mappedFileQueue.getLastMappedFile(expectLogicOffset);
         if (mappedFile != null) {
 
             if (mappedFile.isFirstCreateInQueue() && cqOffset != 0 && mappedFile.getWrotePosition() == 0) {
+                //TODO: 队列中的最小offset
                 this.minLogicOffset = expectLogicOffset;
                 this.mappedFileQueue.setFlushedWhere(expectLogicOffset);
                 this.mappedFileQueue.setCommittedWhere(expectLogicOffset);
@@ -470,7 +474,11 @@ public class ConsumeQueue {
                     );
                 }
             }
+
+            //TODO: 队列中的最大offset
             this.maxPhysicOffset = offset + size;
+
+            //TODO: 将索引单元写入FileChannel中
             return mappedFile.appendMessage(this.byteBufferIndex.array());
         }
         return false;
