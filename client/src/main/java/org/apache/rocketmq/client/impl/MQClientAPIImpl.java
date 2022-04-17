@@ -717,9 +717,14 @@ public class MQClientAPIImpl {
             case ONEWAY:
                 assert false;
                 return null;
+
+
+                //TODO: 异步
             case ASYNC:
                 this.pullMessageAsync(addr, request, timeoutMillis, pullCallback);
                 return null;
+
+                //TODO: 同步
             case SYNC:
                 return this.pullMessageSync(addr, request, timeoutMillis);
             default:

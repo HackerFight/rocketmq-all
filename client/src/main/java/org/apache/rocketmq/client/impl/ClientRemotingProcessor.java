@@ -80,6 +80,8 @@ public class ClientRemotingProcessor extends AsyncNettyRequestProcessor implemen
             case RequestCode.GET_CONSUMER_RUNNING_INFO:
                 return this.getConsumerRunningInfo(ctx, request);
 
+
+                //TODO: 直接消费消息
             case RequestCode.CONSUME_MESSAGE_DIRECTLY:
                 return this.consumeMessageDirectly(ctx, request);
 
@@ -209,6 +211,8 @@ public class ClientRemotingProcessor extends AsyncNettyRequestProcessor implemen
 
         final MessageExt msg = MessageDecoder.decode(ByteBuffer.wrap(request.getBody()));
 
+
+        //TODO: 直接消费消息
         ConsumeMessageDirectlyResult result =
             this.mqClientFactory.consumeMessageDirectly(msg, requestHeader.getConsumerGroup(), requestHeader.getBrokerName());
 

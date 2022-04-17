@@ -1205,6 +1205,8 @@ public class MQClientInstance {
         if (null != mqConsumerInner) {
             DefaultMQPushConsumerImpl consumer = (DefaultMQPushConsumerImpl) mqConsumerInner;
 
+
+            //TODO: 直接消费消息
             ConsumeMessageDirectlyResult result = consumer.getConsumeMessageService().consumeMessageDirectly(msg, brokerName);
             return result;
         }

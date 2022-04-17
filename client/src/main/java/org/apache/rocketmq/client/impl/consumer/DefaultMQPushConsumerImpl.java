@@ -305,6 +305,9 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
 
         final long beginTimestamp = System.currentTimeMillis();
 
+
+
+        //TODO: 拉取消息回调
         PullCallback pullCallback = new PullCallback() {
             @Override
             public void onSuccess(PullResult pullResult) {
@@ -430,17 +433,23 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
             classFilter // class filter
         );
         try {
+
+            //TODO: 拉取消息, 继续点击进去看
             this.pullAPIWrapper.pullKernelImpl(
                 pullRequest.getMessageQueue(),
                 subExpression,
                 subscriptionData.getExpressionType(),
                 subscriptionData.getSubVersion(),
                 pullRequest.getNextOffset(),
+
+                //TODO: 这个值是32
                 this.defaultMQPushConsumer.getPullBatchSize(),
                 sysFlag,
                 commitOffsetValue,
                 BROKER_SUSPEND_MAX_TIME_MILLIS,
                 CONSUMER_TIMEOUT_MILLIS_WHEN_SUSPEND,
+
+                //TODO: 异步
                 CommunicationMode.ASYNC,
                 pullCallback
             );
@@ -615,10 +624,13 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                 }
                 this.offsetStore.load();
 
+
+                //TODO: 判断是否为顺序消息
                 if (this.getMessageListenerInner() instanceof MessageListenerOrderly) {
                     this.consumeOrderly = true;
                     this.consumeMessageService =
                         new ConsumeMessageOrderlyService(this, (MessageListenerOrderly) this.getMessageListenerInner());
+                //TODO: 判断是否为其他消息
                 } else if (this.getMessageListenerInner() instanceof MessageListenerConcurrently) {
                     this.consumeOrderly = false;
                     this.consumeMessageService =

@@ -184,6 +184,8 @@ public class PullAPIWrapper {
             requestHeader.setTopic(mq.getTopic());
             requestHeader.setQueueId(mq.getQueueId());
             requestHeader.setQueueOffset(offset);
+
+            //TODO: pullBatchSize = 32
             requestHeader.setMaxMsgNums(maxNums);
             requestHeader.setSysFlag(sysFlagInner);
             requestHeader.setCommitOffset(commitOffset);
@@ -196,6 +198,7 @@ public class PullAPIWrapper {
             if (PullSysFlag.hasClassFilterFlag(sysFlagInner)) {
                 brokerAddr = computePullFromWhichFilterServer(mq.getTopic(), brokerAddr);
             }
+
 
             PullResult pullResult = this.mQClientFactory.getMQClientAPIImpl().pullMessage(
                 brokerAddr,

@@ -611,6 +611,9 @@ public class DefaultMessageStore implements MessageStore {
                         final int maxFilterMessageCount = Math.max(16000, maxMsgNums * ConsumeQueue.CQ_STORE_UNIT_SIZE);
                         final boolean diskFallRecorded = this.messageStoreConfig.isDiskFallRecorded();
                         ConsumeQueueExt.CqExtUnit cqExtUnit = new ConsumeQueueExt.CqExtUnit();
+
+
+                        //TODO: 根据 pullBatchSize 进行循环拉取消息
                         for (; i < bufferConsumeQueue.getSize() && i < maxFilterMessageCount; i += ConsumeQueue.CQ_STORE_UNIT_SIZE) {
                             long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();
                             int sizePy = bufferConsumeQueue.getByteBuffer().getInt();
@@ -652,6 +655,8 @@ public class DefaultMessageStore implements MessageStore {
                                 continue;
                             }
 
+
+                            //TODO: 从commitlog 读取消息
                             SelectMappedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
                             if (null == selectResult) {
                                 if (getResult.getBufferTotalSize() == 0) {

@@ -69,6 +69,10 @@ import org.apache.rocketmq.store.PutMessageResult;
 import org.apache.rocketmq.store.config.BrokerRole;
 import org.apache.rocketmq.store.stats.BrokerStatsManager;
 
+
+/**
+ * TODO: 消费消息处理器
+ */
 public class PullMessageProcessor extends AsyncNettyRequestProcessor implements NettyRequestProcessor {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private final BrokerController brokerController;
@@ -78,6 +82,8 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
         this.brokerController = brokerController;
     }
 
+
+    //TODO: 处理消费请求
     @Override
     public RemotingCommand processRequest(final ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
@@ -89,6 +95,8 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
         return false;
     }
 
+
+    //TODO: 处理消费请求
     private RemotingCommand processRequest(final Channel channel, RemotingCommand request, boolean brokerAllowSuspend)
         throws RemotingCommandException {
         RemotingCommand response = RemotingCommand.createResponseCommand(PullMessageResponseHeader.class);
@@ -236,6 +244,8 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
                 this.brokerController.getConsumerFilterManager());
         }
 
+
+        //TODO: 从broker 拉取消息
         final GetMessageResult getMessageResult =
             this.brokerController.getMessageStore().getMessage(requestHeader.getConsumerGroup(), requestHeader.getTopic(),
                 requestHeader.getQueueId(), requestHeader.getQueueOffset(), requestHeader.getMaxMsgNums(), messageFilter);

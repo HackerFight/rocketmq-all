@@ -132,11 +132,19 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService {
         return this.consumeExecutor.getCorePoolSize();
     }
 
+
+    /**
+     * TODO: 消费者直接消费消息
+     * @param msg
+     * @param brokerName
+     * @return
+     */
     @Override
     public ConsumeMessageDirectlyResult consumeMessageDirectly(MessageExt msg, String brokerName) {
         ConsumeMessageDirectlyResult result = new ConsumeMessageDirectlyResult();
         result.setOrder(true);
 
+        //TODO: 虽然是集合，不难发现只会存放一条消息
         List<MessageExt> msgs = new ArrayList<MessageExt>();
         msgs.add(msg);
         MessageQueue mq = new MessageQueue();
@@ -395,6 +403,10 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService {
         }
     }
 
+
+    /**
+     * TODO: 异步消费请求， 但是只对广播模式有效
+     */
     class ConsumeRequest implements Runnable {
         private final ProcessQueue processQueue;
         private final MessageQueue messageQueue;

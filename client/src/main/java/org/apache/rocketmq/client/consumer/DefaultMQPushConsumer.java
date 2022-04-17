@@ -727,6 +727,8 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
      * Register a callback to execute on message arrival for concurrent consuming.
      *
      * @param messageListener message handling callback.
+     *
+     *  TODO: 注册其他消息的监听接口
      */
     @Override
     public void registerMessageListener(MessageListenerConcurrently messageListener) {
@@ -738,6 +740,9 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
      * Register a callback to execute on message arrival for orderly consuming.
      *
      * @param messageListener message handling callback.
+     *
+     *
+     *  TODO: 注册 顺序消息的监听接口
      */
     @Override
     public void registerMessageListener(MessageListenerOrderly messageListener) {
