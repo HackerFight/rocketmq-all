@@ -210,6 +210,11 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
         this.offsetStore = offsetStore;
     }
 
+
+    /**
+     * TODO: 这个方法很重要
+     * @param pullRequest
+     */
     public void pullMessage(final PullRequest pullRequest) {
         final ProcessQueue processQueue = pullRequest.getProcessQueue();
         if (processQueue.isDropped()) {
@@ -307,15 +312,22 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
 
 
 
-        //TODO: 拉取消息回调
+        //TODO: 拉取消息回调，这里非常重要，不过这里是从broker拉取消息成功后才执行的，继续往后看
         PullCallback pullCallback = new PullCallback() {
             @Override
             public void onSuccess(PullResult pullResult) {
                 if (pullResult != null) {
+
+                    /**
+                     * 处理从broker读取到的消息
+                     * 将二进制内容抓换成 MessageExt 对象 并根据tag进行过滤
+                     */
                     pullResult = DefaultMQPushConsumerImpl.this.pullAPIWrapper.processPullResult(pullRequest.getMessageQueue(), pullResult,
                         subscriptionData);
 
                     switch (pullResult.getPullStatus()) {
+
+                        //TODO: 发现了消息
                         case FOUND:
                             long prevRequestOffset = pullRequest.getNextOffset();
                             pullRequest.setNextOffset(pullResult.getNextBeginOffset());
@@ -324,6 +336,8 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                                 pullRequest.getMessageQueue().getTopic(), pullRT);
 
                             long firstMsgOffset = Long.MAX_VALUE;
+
+                            //TODO: 如果没有消息则立即执行。。。。。。。
                             if (pullResult.getMsgFoundList() == null || pullResult.getMsgFoundList().isEmpty()) {
                                 DefaultMQPushConsumerImpl.this.executePullRequestImmediately(pullRequest);
                             } else {
@@ -333,6 +347,8 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                                     pullRequest.getMessageQueue().getTopic(), pullResult.getMsgFoundList().size());
 
                                 boolean dispatchToConsume = processQueue.putMessage(pullResult.getMsgFoundList());
+
+                                //TODO: 否则将消息提交到线程池中，由ConsumeMessageService 进行消费
                                 DefaultMQPushConsumerImpl.this.consumeMessageService.submitConsumeRequest(
                                     pullResult.getMsgFoundList(),
                                     processQueue,

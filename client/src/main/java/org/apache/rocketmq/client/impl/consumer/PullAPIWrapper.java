@@ -200,6 +200,7 @@ public class PullAPIWrapper {
             }
 
 
+            //TODO: 拉取消息
             PullResult pullResult = this.mQClientFactory.getMQClientAPIImpl().pullMessage(
                 brokerAddr,
                 requestHeader,
@@ -207,6 +208,7 @@ public class PullAPIWrapper {
                 communicationMode,
                 pullCallback);
 
+            //TODO:返回拉取到的消息
             return pullResult;
         }
 

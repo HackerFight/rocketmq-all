@@ -711,6 +711,15 @@ public class MQClientAPIImpl {
         final CommunicationMode communicationMode,
         final PullCallback pullCallback
     ) throws RemotingException, MQBrokerException, InterruptedException {
+
+        /**
+         * TODO: 这里非常重要
+         * RequestCode.PULL_MESSAGE
+         * @see BrokerController#registerProcessor()
+         *
+         * this.remotingServer.registerProcessor(RequestCode.PULL_MESSAGE, this.pullMessageProcessor, this.pullMessageExecutor);
+         * @see PullMessageProcessor  它会从Broker拉取消息
+         */
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.PULL_MESSAGE, requestHeader);
 
         switch (communicationMode) {
@@ -721,6 +730,8 @@ public class MQClientAPIImpl {
 
                 //TODO: 异步
             case ASYNC:
+
+                //TODO: 拉取到消息后，交给 pullCallback 处理
                 this.pullMessageAsync(addr, request, timeoutMillis, pullCallback);
                 return null;
 
