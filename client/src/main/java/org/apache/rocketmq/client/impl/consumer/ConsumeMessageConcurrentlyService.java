@@ -260,15 +260,24 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
 
         switch (status) {
             case CONSUME_SUCCESS:
+                //TODO: 猜测结果是true, 因为 ackIndex 是 Integer.MAX_VALUE
                 if (ackIndex >= consumeRequest.getMsgs().size()) {
+                    /**
+                     * ackIndex 实际值 = （消息的数量 - 1）
+                     * 假如消息数量是1，那么ackIndex = 0
+                     */
                     ackIndex = consumeRequest.getMsgs().size() - 1;
                 }
+                //ok = 1
                 int ok = ackIndex + 1;
+                //failed = 0
                 int failed = consumeRequest.getMsgs().size() - ok;
+                //标记成功消费
                 this.getConsumerStatsManager().incConsumeOKTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), ok);
                 this.getConsumerStatsManager().incConsumeFailedTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), failed);
                 break;
             case RECONSUME_LATER:
+                //如果失败，则 ackIndex = -1
                 ackIndex = -1;
                 this.getConsumerStatsManager().incConsumeFailedTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(),
                     consumeRequest.getMsgs().size());
@@ -279,6 +288,8 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
 
         switch (this.defaultMQPushConsumer.getMessageModel()) {
             case BROADCASTING:
+                //广播模式下，如果消费失败，则直接丢弃消息
+                //消费失败才会进入循环
                 for (int i = ackIndex + 1; i < consumeRequest.getMsgs().size(); i++) {
                     MessageExt msg = consumeRequest.getMsgs().get(i);
                     log.warn("BROADCASTING, the message consume failed, drop it, {}", msg.toString());
@@ -286,8 +297,10 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
                 break;
             case CLUSTERING:
                 List<MessageExt> msgBackFailed = new ArrayList<MessageExt>(consumeRequest.getMsgs().size());
+                //消费失败，才会进入循环
                 for (int i = ackIndex + 1; i < consumeRequest.getMsgs().size(); i++) {
                     MessageExt msg = consumeRequest.getMsgs().get(i);
+                    //将消息发送到broker,继续看这个方法内部
                     boolean result = this.sendMessageBack(msg, context);
                     if (!result) {
                         msg.setReconsumeTimes(msg.getReconsumeTimes() + 1);
