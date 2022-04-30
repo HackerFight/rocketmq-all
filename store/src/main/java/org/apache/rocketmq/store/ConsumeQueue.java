@@ -475,7 +475,7 @@ public class ConsumeQueue {
                 }
             }
 
-            //TODO: 队列中的最大offset
+            //TODO: 记录一下commitlog 中最大的物理偏移量
             this.maxPhysicOffset = offset + size;
 
             //TODO: 将索引单元写入FileChannel中

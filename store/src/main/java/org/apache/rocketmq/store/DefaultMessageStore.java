@@ -556,6 +556,8 @@ public class DefaultMessageStore implements MessageStore {
         return commitLog;
     }
 
+
+    //TODO: maxMsgNums 默认是32，取的是 pullBatchSize的值
     public GetMessageResult getMessage(final String group, final String topic, final int queueId, final long offset,
         final int maxMsgNums,
         final MessageFilter messageFilter) {
@@ -580,8 +582,13 @@ public class DefaultMessageStore implements MessageStore {
 
         final long maxOffsetPy = this.commitLog.getMaxOffset();
 
+
+        //TODO: 根据 topic 和 queueId 获取 ConsumeQueue
+        // 一个 ConsumeQueue 对应一个 MappedFileQueue
+        // 一个 MappedFileQueue 对应多个 MappedFile
         ConsumeQueue consumeQueue = findConsumeQueue(topic, queueId);
         if (consumeQueue != null) {
+            //TODO: 队列中保存了最大，最小 offset
             minOffset = consumeQueue.getMinOffsetInQueue();
             maxOffset = consumeQueue.getMaxOffsetInQueue();
 
@@ -602,6 +609,11 @@ public class DefaultMessageStore implements MessageStore {
                     nextBeginOffset = nextOffsetCorrection(offset, maxOffset);
                 }
             } else {
+
+                //TODO: 从 consumequeue 中读取索引数据
+                //TODO: 这个和消息分发 ReputMessageService 从 commitlog 中读取消息是一样的
+                //TODO: 第一次 offset=0, 从 consumequeue中读取多少消息呢？
+                //TODO: 在数据分发后，MappedFile wrotePosition 会记录写入的位置（就是记录写到哪里了）
                 SelectMappedBufferResult bufferConsumeQueue = consumeQueue.getIndexBuffer(offset);
                 if (bufferConsumeQueue != null) {
                     try {
@@ -611,16 +623,23 @@ public class DefaultMessageStore implements MessageStore {
                         long maxPhyOffsetPulling = 0;
 
                         int i = 0;
+
+                        //TODO: pullBatchSize(32) 好像并没有用, 只有当 pullBatchSize > 800 时才有用？
                         final int maxFilterMessageCount = Math.max(16000, maxMsgNums * ConsumeQueue.CQ_STORE_UNIT_SIZE);
                         final boolean diskFallRecorded = this.messageStoreConfig.isDiskFallRecorded();
                         ConsumeQueueExt.CqExtUnit cqExtUnit = new ConsumeQueueExt.CqExtUnit();
 
 
-                        //TODO: 根据 pullBatchSize 进行循环拉取消息
+                        //TODO: bufferConsumeQueue.getSize()  就是consumequeue 中的消息索引单元的总size(size/20 = 索引个数)
+                        //TODO: 每20个字节往前推
                         for (; i < bufferConsumeQueue.getSize() && i < maxFilterMessageCount; i += ConsumeQueue.CQ_STORE_UNIT_SIZE) {
+                            //TODO: 消息偏移量
                             long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();
+                            //TODO: 消息大小
                             int sizePy = bufferConsumeQueue.getByteBuffer().getInt();
                             long tagsCode = bufferConsumeQueue.getByteBuffer().getLong();
+
+                            //TODO: offsetPy + sizePy = 确定一条消息
 
                             maxPhyOffsetPulling = offsetPy;
 
@@ -691,6 +710,9 @@ public class DefaultMessageStore implements MessageStore {
                             brokerStatsManager.recordDiskFallBehindSize(group, topic, queueId, fallBehind);
                         }
 
+
+                        //TODO: 下一次的 queue offset
+                        //TODO: 假如第一次读取，并且小只有一条，那么 nextBeginOffset = 0 + 20 / 20 = 1;
                         nextBeginOffset = offset + (i / ConsumeQueue.CQ_STORE_UNIT_SIZE);
 
                         long diff = maxOffsetPy - maxPhyOffsetPulling;
@@ -722,6 +744,9 @@ public class DefaultMessageStore implements MessageStore {
         this.storeStatsService.setGetMessageEntireTimeMax(elapsedTime);
 
         getResult.setStatus(status);
+
+        //TODO: 设置 nextBeginOffset ，消费者拿到 nextBeginOffset 后会设置到 nextOffset
+        //TODO: 然后消费者下次传过来，他就是这个方法的参数的  offset
         getResult.setNextBeginOffset(nextBeginOffset);
         getResult.setMaxOffset(maxOffset);
         getResult.setMinOffset(minOffset);
@@ -1986,6 +2011,7 @@ public class DefaultMessageStore implements MessageStore {
 
                                     //TODO: 已经读过了的消息
                                     readSize += size;
+
                                     if (DefaultMessageStore.this.getMessageStoreConfig().getBrokerRole() == BrokerRole.SLAVE) {
                                         DefaultMessageStore.this.storeStatsService
                                             .getSinglePutMessageTopicTimesTotal(dispatchRequest.getTopic()).incrementAndGet();

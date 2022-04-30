@@ -303,6 +303,9 @@ public class MappedFileQueue {
     public long getMaxOffset() {
         MappedFile mappedFile = getLastMappedFile();
         if (mappedFile != null) {
+
+            //TODO: mappedFile.getFileFromOffset() 就是mappedFile的第一个偏移量（也就是文件名）
+            //TODO: mappedFile.getReadPosition() 就是每次写到的mappedFile的位置值
             return mappedFile.getFileFromOffset() + mappedFile.getReadPosition();
         }
         return 0;

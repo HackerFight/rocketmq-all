@@ -183,6 +183,8 @@ public class PullAPIWrapper {
             requestHeader.setConsumerGroup(this.consumerGroup);
             requestHeader.setTopic(mq.getTopic());
             requestHeader.setQueueId(mq.getQueueId());
+
+            //TODO: queue offset
             requestHeader.setQueueOffset(offset);
 
             //TODO: pullBatchSize = 32

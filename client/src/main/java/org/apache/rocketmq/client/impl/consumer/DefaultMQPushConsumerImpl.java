@@ -462,6 +462,8 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                 subExpression,
                 subscriptionData.getExpressionType(),
                 subscriptionData.getSubVersion(),
+
+                //TODO: 这个是 queue 的 offset
                 pullRequest.getNextOffset(),
 
                 //TODO: 这个值是32

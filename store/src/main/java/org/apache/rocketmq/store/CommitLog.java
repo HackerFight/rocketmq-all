@@ -621,9 +621,9 @@ public class CommitLog {
             //TODO： 添加消息
             result = mappedFile.appendMessage(msg, this.appendMessageCallback);
             switch (result.getStatus()) {
-                case PUT_OK:
+                case PUT_OK:  //TODO: 写入成功，直接返回
                     break;
-                case END_OF_FILE:
+                case END_OF_FILE:  //TODO: 写到文件末尾了，重新新建一个文件再次写入
                     unlockMappedFile = mappedFile;
                     // Create a new file, re-write the message
                     mappedFile = this.mappedFileQueue.getLastMappedFile(0);
@@ -1529,6 +1529,7 @@ public class CommitLog {
             // STORETIMESTAMP + STOREHOSTADDRESS + OFFSET <br>
 
             // PHY OFFSET
+            //TODO: fileFromOffset 是每个文件的第一个物理偏移量，也就是文件名（每个文件1G)
             long wroteOffset = fileFromOffset + byteBuffer.position();
 
             int sysflag = msgInner.getSysFlag();
@@ -1553,11 +1554,12 @@ public class CommitLog {
             keyBuilder.append(msgInner.getQueueId());
             String key = keyBuilder.toString();
 
-            //TODO: 记录consumequeu 的 offset
+            //TODO: 记录consumequeue 的 offset
             //TODO: key=(topic-queueid) 可以看出，他已经确定了topic和queue
             //TODO: value 就是这个topic下的这个queue的 offset
             Long queueOffset = CommitLog.this.topicQueueTable.get(key);
             if (null == queueOffset) {
+                //TODO: 第一次放入肯定是null, 所以queueOffset = 0, 并且放入map中
                 queueOffset = 0L;
                 CommitLog.this.topicQueueTable.put(key, queueOffset);
             }
@@ -1598,6 +1600,7 @@ public class CommitLog {
             final int msgLen = calMsgLength(msgInner.getSysFlag(), bodyLength, topicLength, propertiesLength);
 
             // Exceeds the maximum message
+            //TODO: 消息大小超过了4M
             if (msgLen > this.maxMessageSize) {
                 CommitLog.log.warn("message size exceeded, msg total size: " + msgLen + ", msg body size: " + bodyLength
                     + ", maxMessageSize: " + this.maxMessageSize);
@@ -1605,6 +1608,7 @@ public class CommitLog {
             }
 
             // Determines whether there is sufficient free space
+            //TODO: 消息已经写到文件末尾写不开了，则返回 END_OF_FILE 码，然后新建mappedFile文件再次写入
             if ((msgLen + END_FILE_MIN_BLANK_LENGTH) > maxBlank) {
                 this.resetByteBuffer(this.msgStoreItemMemory, maxBlank);
                 // 1 TOTALSIZE
@@ -1620,6 +1624,7 @@ public class CommitLog {
             }
 
             // Initialization of storage space
+            //TODO: 正常写入
             this.resetByteBuffer(msgStoreItemMemory, msgLen);
             // 1 TOTALSIZE
             this.msgStoreItemMemory.putInt(msgLen);
@@ -1666,6 +1671,8 @@ public class CommitLog {
 
             final long beginTimeMills = CommitLog.this.defaultMessageStore.now();
             // Write messages to the queue buffer
+
+            //TODO: 将消息体数据写入buffer中
             byteBuffer.put(this.msgStoreItemMemory.array(), 0, msgLen);
 
             AppendMessageResult result = new AppendMessageResult(AppendMessageStatus.PUT_OK, wroteOffset, msgLen, msgId,

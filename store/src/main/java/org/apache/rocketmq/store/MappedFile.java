@@ -211,6 +211,8 @@ public class MappedFile extends ReferenceResource {
             if (messageExt instanceof MessageExtBrokerInner) {
 
                 //TODO: 普通消息
+                //TODO: this.getFileFromOffset() 对应的是 fileFromOffset 属性，他就是每个mappedFile 文件的第一个偏移量，也就是文件名
+                //TODO: 第三个参数maxBlank, 是文件大小（1G) -当前文件已经写入的数据
                 result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (MessageExtBrokerInner) messageExt);
             } else if (messageExt instanceof MessageExtBatch) {
                 result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (MessageExtBatch) messageExt);
@@ -481,6 +483,7 @@ public class MappedFile extends ReferenceResource {
      * @return The max position which have valid data
      */
     public int getReadPosition() {
+        //TODO: 每次写入成功后，wrotePosition 会记录写入的位置（每次自增消息的总大小）
         return this.writeBuffer == null ? this.wrotePosition.get() : this.committedPosition.get();
     }
 
