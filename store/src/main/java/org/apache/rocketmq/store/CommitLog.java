@@ -617,6 +617,8 @@ public class CommitLog {
                 return CompletableFuture.completedFuture(new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED, null));
             }
 
+
+            //TODO： 添加消息
             result = mappedFile.appendMessage(msg, this.appendMessageCallback);
             switch (result.getStatus()) {
                 case PUT_OK:
@@ -1550,6 +1552,10 @@ public class CommitLog {
             keyBuilder.append('-');
             keyBuilder.append(msgInner.getQueueId());
             String key = keyBuilder.toString();
+
+            //TODO: 记录consumequeu 的 offset
+            //TODO: key=(topic-queueid) 可以看出，他已经确定了topic和queue
+            //TODO: value 就是这个topic下的这个queue的 offset
             Long queueOffset = CommitLog.this.topicQueueTable.get(key);
             if (null == queueOffset) {
                 queueOffset = 0L;
@@ -1672,6 +1678,8 @@ public class CommitLog {
                 case MessageSysFlag.TRANSACTION_NOT_TYPE:
                 case MessageSysFlag.TRANSACTION_COMMIT_TYPE:
                     // The next update ConsumeQueue information
+
+                    //TODO: 写入成功后，consumequeue 下的 offset 自增1
                     CommitLog.this.topicQueueTable.put(key, ++queueOffset);
                     break;
                 default:

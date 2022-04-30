@@ -337,7 +337,8 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
 
                             long firstMsgOffset = Long.MAX_VALUE;
 
-                            //TODO: 如果没有消息则立即执行。。。。。。。
+                            //TODO: 如果没有消息则立即执行，立即拉取的意思是继续将PullRequest 放入队列中，这样
+                            // take()方法将不会在阻塞，然后继续从broker拉取消息，从而达到持续从broker拉取消息
                             if (pullResult.getMsgFoundList() == null || pullResult.getMsgFoundList().isEmpty()) {
                                 DefaultMQPushConsumerImpl.this.executePullRequestImmediately(pullRequest);
                             } else {
@@ -348,17 +349,22 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
 
                                 boolean dispatchToConsume = processQueue.putMessage(pullResult.getMsgFoundList());
 
-                                //TODO: 否则将消息提交到线程池中，由ConsumeMessageService 进行消费
+                                //TODO: 将消息提交到线程池中，由ConsumeMessageService 进行消费
                                 DefaultMQPushConsumerImpl.this.consumeMessageService.submitConsumeRequest(
                                     pullResult.getMsgFoundList(),
                                     processQueue,
                                     pullRequest.getMessageQueue(),
                                     dispatchToConsume);
 
+
+                                //TODO: 上面是异步消费，然后这里是将PullRequest放入 队列中，这样take()方法将不会
+                                //TODO: 阻塞，然后继续从broker拉取消息，从而达到持续从broker拉取消息
+                                //延迟 pullInterval 时间再去拉取消息
                                 if (DefaultMQPushConsumerImpl.this.defaultMQPushConsumer.getPullInterval() > 0) {
                                     DefaultMQPushConsumerImpl.this.executePullRequestLater(pullRequest,
                                         DefaultMQPushConsumerImpl.this.defaultMQPushConsumer.getPullInterval());
                                 } else {
+                                    //立即拉取消息
                                     DefaultMQPushConsumerImpl.this.executePullRequestImmediately(pullRequest);
                                 }
                             }

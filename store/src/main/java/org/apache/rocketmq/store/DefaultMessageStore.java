@@ -428,6 +428,9 @@ public class DefaultMessageStore implements MessageStore {
         }
 
         long beginTime = this.getSystemClock().now();
+
+
+        //TODO: 向commitlog写入消息数据
         CompletableFuture<PutMessageResult> putResultFuture = this.commitLog.asyncPutMessage(msg);
 
         putResultFuture.thenAccept((result) -> {
@@ -1926,6 +1929,8 @@ public class DefaultMessageStore implements MessageStore {
         }
 
         private void doReput() {
+
+            //TODO: reputFromOffset 这个值默认是0
             if (this.reputFromOffset < DefaultMessageStore.this.commitLog.getMinOffset()) {
                 log.warn("The reputFromOffset={} is smaller than minPyOffset={}, this usually indicate that the dispatch behind too much and the commitlog has expired.",
                     this.reputFromOffset, DefaultMessageStore.this.commitLog.getMinOffset());
@@ -1940,11 +1945,16 @@ public class DefaultMessageStore implements MessageStore {
                     break;
                 }
 
-                //TODO:今后偏移量开始找到这个 CommitLog 文件的全部数据
+                //TODO:假设我第一条消息的总大小是245byte,那么写入成功后 MappedFile.wrotePosition 会记录位置
+                //TODO: 所以它就从0读取到245byte返回，只读取一条消息吗？
+                //TODO: 是的，只读取一条消息，因为这个异步线程每隔10ms就会发起请求，去commitlog读取新消息
+                //TODO: 正常来说，在第二个消息写入之前，它就已经执行了，所以基本上就是每次读一条消息
                 SelectMappedBufferResult result = DefaultMessageStore.this.commitLog.getData(reputFromOffset);
                 if (result != null) {
                     try {
-                        //TODO: 标记启示位置
+                        //TODO: 标记下次拉取的起始位置
+                        //TODO: 第一次默认是0，则从0开始读取一条消息，消息大小为245byte
+                        //TODO: 那么第二次拉取时，这个值就是245
                         this.reputFromOffset = result.getStartOffset();
 
                         for (int readSize = 0; readSize < result.getSize() && doNext; ) {

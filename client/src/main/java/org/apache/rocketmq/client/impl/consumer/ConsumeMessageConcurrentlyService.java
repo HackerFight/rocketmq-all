@@ -318,6 +318,9 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
                 break;
         }
 
+        //TODO:这个offset（= consumeRequest.getMsgs().size()) 并不一定是从broker拉取消息的数量(size)
+        //TODO: 如果 consumeMessageBatchMaxSize = x, 那么这个 consumeRequest.getMsgs().size() =x
+        //TODO: 表示消费了x条数据
         long offset = consumeRequest.getProcessQueue().removeMessage(consumeRequest.getMsgs());
         if (offset >= 0 && !consumeRequest.getProcessQueue().isDropped()) {
             this.defaultMQPushConsumerImpl.getOffsetStore().updateOffset(consumeRequest.getMessageQueue(), offset, true);
