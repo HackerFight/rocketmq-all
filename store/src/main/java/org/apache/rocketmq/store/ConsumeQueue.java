@@ -76,6 +76,13 @@ public class ConsumeQueue {
         }
     }
 
+
+    /**
+     * 注意：TODO:
+     * 一个 CommitLog ---> 一个 MappedFileQueue  -----> 多个MappedFile
+     * 一个 queueid   ---> 一个 MappedFileQueue  -----> 多个MappedFile
+     * 所以 commitlog 可以进来这里，consumequeue 也可以进来这里
+     */
     public boolean load() {
         boolean result = this.mappedFileQueue.load();
         log.info("load consume queue " + this.topic + "-" + this.queueId + " " + (result ? "OK" : "Failed"));

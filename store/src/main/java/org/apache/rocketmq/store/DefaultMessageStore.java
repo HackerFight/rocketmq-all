@@ -67,26 +67,31 @@ public class DefaultMessageStore implements MessageStore {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
 
     private final MessageStoreConfig messageStoreConfig;
-    // CommitLog
+    //TODO：处理commitlog
     private final CommitLog commitLog;
 
     //TODO： 一个queueid 对应一个 ConsumeqQueue, ConsumeQueue内部有很多文件MappedFile
     private final ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
 
+    //TODO: 持久化 consumequeue
     private final FlushConsumeQueueService flushConsumeQueueService;
 
     private final CleanCommitLogService cleanCommitLogService;
 
     private final CleanConsumeQueueService cleanConsumeQueueService;
 
+    //TODO: 处理IndexFile
     private final IndexService indexService;
 
     private final AllocateMappedFileService allocateMappedFileService;
 
+    //TODO: 消息分发
     private final ReputMessageService reputMessageService;
 
+    //TODO: 高可用
     private final HAService haService;
 
+    //TODO: 定时任务
     private final ScheduleMessageService scheduleMessageService;
 
     private final StoreStatsService storeStatsService;

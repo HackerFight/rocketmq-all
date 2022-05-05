@@ -199,6 +199,7 @@ public class IndexService {
     }
 
     public void buildIndex(DispatchRequest req) {
+        //TODO: 尝试获取或者创建IndexFile
         IndexFile indexFile = retryGetAndCreateIndexFile();
         if (indexFile != null) {
             long endPhyOffset = indexFile.getEndPhyOffset();
@@ -298,12 +299,15 @@ public class IndexService {
         {
             this.readWriteLock.readLock().lock();
             if (!this.indexFileList.isEmpty()) {
+                //TODO: 获取最新的 IndexFile 文件
                 IndexFile tmp = this.indexFileList.get(this.indexFileList.size() - 1);
                 if (!tmp.isWriteFull()) {
+                    //TODO: 如果没有写满，则使用当前最新的IndexFile
                     indexFile = tmp;
                 } else {
                     lastUpdateEndPhyOffset = tmp.getEndPhyOffset();
                     lastUpdateIndexTimestamp = tmp.getEndTimestamp();
+                    //TODO: 如果写满了，则标记当前IndexFile为 preIndexFile, 留着后面持久化
                     prevIndexFile = tmp;
                 }
             }
@@ -311,15 +315,18 @@ public class IndexService {
             this.readWriteLock.readLock().unlock();
         }
 
+        //TODO: 第一次刚开始创建；或者文件写满了，要创建新的
         if (indexFile == null) {
             try {
                 String fileName =
                     this.storePath + File.separator
                         + UtilAll.timeMillisToHumanString(System.currentTimeMillis());
+                //TODO: 创建新的IndexFile文件
                 indexFile =
                     new IndexFile(fileName, this.hashSlotNum, this.indexNum, lastUpdateEndPhyOffset,
                         lastUpdateIndexTimestamp);
                 this.readWriteLock.writeLock().lock();
+                //TODO: 放入集合中
                 this.indexFileList.add(indexFile);
             } catch (Exception e) {
                 log.error("getLastIndexFile exception ", e);
@@ -327,12 +334,14 @@ public class IndexService {
                 this.readWriteLock.writeLock().unlock();
             }
 
-            //TODO: 如果新建了一个文件，则将上一个写满的文件进行异步刷盘
+            //TODO: 新建了IndexFile或者原来的IndexFile还没有写满
             if (indexFile != null) {
+                //TODO: 如果前一个IndexFile写满了，则执行刷盘
                 final IndexFile flushThisFile = prevIndexFile;
                 Thread flushThread = new Thread(new Runnable() {
                     @Override
                     public void run() {
+                        //TODO: 内部会对 flushThisFile 进行null判断，如果null则直接return
                         IndexService.this.flush(flushThisFile);
                     }
                 }, "FlushIndexFileThread");

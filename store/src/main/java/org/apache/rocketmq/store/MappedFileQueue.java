@@ -101,6 +101,10 @@ public class MappedFileQueue {
         return mfs;
     }
 
+    /**
+     * TODO: consumequeue 中保存了commitlog 中最大的物理偏移量，然后传递到这个方法中
+     * @param offset
+     */
     public void truncateDirtyFiles(long offset) {
         List<MappedFile> willRemoveFiles = new ArrayList<MappedFile>();
 
@@ -108,6 +112,8 @@ public class MappedFileQueue {
             long fileTailOffset = file.getFileFromOffset() + this.mappedFileSize;
             if (fileTailOffset > offset) {
                 if (offset >= file.getFileFromOffset()) {
+
+                    //TODO: 将MappedFile 的实际写入位置更新下，请先看 load() 方法
                     file.setWrotePosition((int) (offset % this.mappedFileSize));
                     file.setCommittedPosition((int) (offset % this.mappedFileSize));
                     file.setFlushedPosition((int) (offset % this.mappedFileSize));
@@ -144,14 +150,22 @@ public class MappedFileQueue {
         }
     }
 
+    //TODO: 这里的目的是为了重启后重新加载MappedFile 文件
     public boolean load() {
+
+        //TODO: 如果是commitlog, 则storePath默认是 $user.home/store/commitlog/
+        //TODO: 如果是consumequeue, 则storePath默认是 $user.home/store/store/consumequeue/topic/queueid
         File dir = new File(this.storePath);
+
+        //TODO: 如果是首次启动，那么这里是没有文件的，直接跳过循环，返回true
         File[] files = dir.listFiles();
         if (files != null) {
             // ascending order
             Arrays.sort(files);
             for (File file : files) {
 
+                //TODO: 如果是commitlog, 则 mappedFileSize 默认是1G
+                //TODO: 如果是consumequeue, 则 mappedFileSize 默认是6000000
                 if (file.length() != this.mappedFileSize) {
                     log.warn(file + "\t" + file.length()
                         + " length not matched message store config value, please check it manually");
@@ -161,6 +175,10 @@ public class MappedFileQueue {
                 try {
                     MappedFile mappedFile = new MappedFile(file.getPath(), mappedFileSize);
 
+                    //TODO: 但是这里为什么要记录已经写到了文件的最大值了呢？
+                    //TODO: 我通过debug发现，这里确实是记录写到最大值，但是我写入一条消息发现它get出来的并不是最大值
+                    //TODO: 我确定他们是同一个对象
+                    //TODO: ? 请看 truncateDirtyFiles() 方法
                     mappedFile.setWrotePosition(this.mappedFileSize);
                     mappedFile.setFlushedPosition(this.mappedFileSize);
                     mappedFile.setCommittedPosition(this.mappedFileSize);
@@ -191,20 +209,30 @@ public class MappedFileQueue {
         return 0;
     }
 
+    //TODO: commitlog 和 consumequeue 都会进来这里的
     public MappedFile getLastMappedFile(final long startOffset, boolean needCreate) {
         long createOffset = -1;
-        //TODO: 指定了topic 和 queueId 下的 最新的 MappedFile
+        //TODO: 如果是consumequeue: 则是指定了topic 和 queueId 下的 最新的 MappedFile
+        //TODO: 如果是commitlog,那就是commitlog对应的最新MappedFile
         MappedFile mappedFileLast = getLastMappedFile();
 
         if (mappedFileLast == null) {
+            //TODO: 第一次进来，这个 createOffset = 0
+            //TODO: 如果是commitlog, 则 mappedFileSize = 1073741824(1G)
+            //TODO: 如果是consumequeue, 则 mappedFileSize = 600w
             createOffset = startOffset - (startOffset % this.mappedFileSize);
         }
 
         if (mappedFileLast != null && mappedFileLast.isFull()) {
+            //TODO: 假设是commitlog,当第一个文件写满了，要写第二个MappedFile文件时，那么 createOffset 是多少呢？
+            //TODO: 他是 0 + 1073741824(1G) = 00000000001073741824(20位)
             createOffset = mappedFileLast.getFileFromOffset() + this.mappedFileSize;
         }
 
         if (createOffset != -1 && needCreate) {
+            //TODO: 假设是commitlog
+            //TODO:第一个文件就是 $user.home/store/commitlog/00000000000000000000
+            //TODO:第二个文件就是 $user.home/store/commitlog/00000000001073741824
             String nextFilePath = this.storePath + File.separator + UtilAll.offset2FileName(createOffset);
             String nextNextFilePath = this.storePath + File.separator
                 + UtilAll.offset2FileName(createOffset + this.mappedFileSize);
@@ -225,6 +253,8 @@ public class MappedFileQueue {
                 if (this.mappedFiles.isEmpty()) {
                     mappedFile.setFirstCreateInQueue(true);
                 }
+
+                //放入集合中
                 this.mappedFiles.add(mappedFile);
             }
 
@@ -241,6 +271,7 @@ public class MappedFileQueue {
     public MappedFile getLastMappedFile() {
         MappedFile mappedFileLast = null;
 
+        //TODO: 第一次发送消息时，这里是空的，直接返回null
         while (!this.mappedFiles.isEmpty()) {
             try {
                 mappedFileLast = this.mappedFiles.get(this.mappedFiles.size() - 1);

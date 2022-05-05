@@ -205,13 +205,15 @@ public class MappedFile extends ReferenceResource {
         int currentPos = this.wrotePosition.get();
 
         if (currentPos < this.fileSize) {
+
+            //TODO: 取得是 this.mappedByteBuffer.slice()
             ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : this.mappedByteBuffer.slice();
             byteBuffer.position(currentPos);
             AppendMessageResult result;
             if (messageExt instanceof MessageExtBrokerInner) {
 
                 //TODO: 普通消息
-                //TODO: this.getFileFromOffset() 对应的是 fileFromOffset 属性，他就是每个mappedFile 文件的第一个偏移量，也就是文件名
+                //TODO: this.getFileFromOffset() 对应的是 fileFromOffset 属性，他就是每个mappedFile 文件的第一个偏移量，也就是文件名，Long.parseLong() 取得的，第一个文件的话就是0
                 //TODO: 第三个参数maxBlank, 是文件大小（1G) -当前文件已经写入的数据
                 result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (MessageExtBrokerInner) messageExt);
             } else if (messageExt instanceof MessageExtBatch) {
