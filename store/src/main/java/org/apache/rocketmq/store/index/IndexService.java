@@ -48,7 +48,9 @@ public class IndexService {
 
     public IndexService(final DefaultMessageStore store) {
         this.defaultMessageStore = store;
+        //TODO: slot槽数是500w个
         this.hashSlotNum = store.getMessageStoreConfig().getMaxHashSlotNum();
+        //TODO: index 索引单元是2000w个
         this.indexNum = store.getMessageStoreConfig().getMaxIndexNum();
         this.storePath =
             StorePathConfigHelper.getStorePathIndex(store.getMessageStoreConfig().getStorePathRootDir());

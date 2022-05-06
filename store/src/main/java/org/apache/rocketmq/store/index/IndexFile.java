@@ -91,8 +91,12 @@ public class IndexFile {
 
     public boolean putKey(final String key, final long phyOffset, final long storeTimestamp) {
         if (this.indexHeader.getIndexCount() < this.indexNum) {
+            //TODO: 对key取hash值
             int keyHash = indexKeyHashMethod(key);
+            //TODO: 计算这个key 在 slot槽的位置（500w个）
             int slotPos = keyHash % this.hashSlotNum;
+
+            //TODO: 计算slot的位置：固定40字节的IndexHeader + (slotPos * 每个slot槽固定4byte)
             int absSlotPos = IndexHeader.INDEX_HEADER_SIZE + slotPos * hashSlotSize;
 
             FileLock fileLock = null;
@@ -101,13 +105,18 @@ public class IndexFile {
 
                 // fileLock = this.fileChannel.lock(absSlotPos, hashSlotSize,
                 // false);
+
+                //TODO: 取出当前slot槽中存储的值 slotValue
                 int slotValue = this.mappedByteBuffer.getInt(absSlotPos);
                 if (slotValue <= invalidIndex || slotValue > this.indexHeader.getIndexCount()) {
                     slotValue = invalidIndex;
                 }
 
+                //TODO: storeTimestamp 消息的存储时间（写到commitlog的时间）
+                //TODO: this.indexHeader.getBeginTimestamp() 写入这个IndexFile第一条消息的时间
                 long timeDiff = storeTimestamp - this.indexHeader.getBeginTimestamp();
 
+                //TODO: timeDiff/1000, 这样占用4byte就够用了
                 timeDiff = timeDiff / 1000;
 
                 if (this.indexHeader.getBeginTimestamp() <= 0) {
@@ -118,27 +127,41 @@ public class IndexFile {
                     timeDiff = 0;
                 }
 
+                //TODO: 计算索引单元的位置
+                //TODO: IndexHeader.INDEX_HEADER_SIZE 固定长度是40byte
+                //TODO: this.hashSlotNum * hashSlotSize 就是500个slot槽 * 每个slot槽4byte
+                //TODO: indexCount * 每个索引单元固定20byte (indexCount 在IndexHeader中有记录）
                 int absIndexPos =
                     IndexHeader.INDEX_HEADER_SIZE + this.hashSlotNum * hashSlotSize
                         + this.indexHeader.getIndexCount() * indexSize;
 
+                //TODO: 按照顺序放入索引单元数据，
+                //TODO: 分别是4byte的key的hash值，8byte的消息物理偏移量，4byte的(消息存储时间与当前IndexFile存储第一条消息的时间差)
+                //TODO: 以及4byte上一次这个slot槽存储的值（它的存储结构类似于HashMap, 所以这个值就是用来解决hash冲突的）
                 this.mappedByteBuffer.putInt(absIndexPos, keyHash);
                 this.mappedByteBuffer.putLong(absIndexPos + 4, phyOffset);
                 this.mappedByteBuffer.putInt(absIndexPos + 4 + 8, (int) timeDiff);
                 this.mappedByteBuffer.putInt(absIndexPos + 4 + 8 + 4, slotValue);
 
+                //TODO: 这个slot槽存储的值indexCount的最大值
                 this.mappedByteBuffer.putInt(absSlotPos, this.indexHeader.getIndexCount());
 
                 if (this.indexHeader.getIndexCount() <= 1) {
+                    //TODO: 写入IndexFile的第一条消息的物理偏移量放入IndexHeader中
                     this.indexHeader.setBeginPhyOffset(phyOffset);
+                    //TODO: 写入IndexFile的第一条消息的时间放入IndexHeader中
                     this.indexHeader.setBeginTimestamp(storeTimestamp);
                 }
 
                 if (invalidIndex == slotValue) {
                     this.indexHeader.incHashSlotCount();
                 }
+
+                //TODO: indexCount++，统计在 IndexHeader中
                 this.indexHeader.incIndexCount();
+                //TODO: 将写入IndexFile的最后一条消息的物理偏移量写入IndexHeader中
                 this.indexHeader.setEndPhyOffset(phyOffset);
+                //TODO: 将写入IndexFile的最后一条消息的时间写入IndexHeader中
                 this.indexHeader.setEndTimestamp(storeTimestamp);
 
                 return true;
