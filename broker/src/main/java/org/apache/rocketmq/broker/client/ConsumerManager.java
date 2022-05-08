@@ -99,16 +99,21 @@ public class ConsumerManager {
         ConsumeType consumeType, MessageModel messageModel, ConsumeFromWhere consumeFromWhere,
         final Set<SubscriptionData> subList, boolean isNotifyConsumerIdsChangedEnable) {
 
+        //TODO:key=groupName, value=消费者组信息（其内部维护了各个消费者）
         ConsumerGroupInfo consumerGroupInfo = this.consumerTable.get(group);
         if (null == consumerGroupInfo) {
+            //TODO:构建消费者组信息
             ConsumerGroupInfo tmp = new ConsumerGroupInfo(group, consumeType, messageModel, consumeFromWhere);
+            //TODO:保存到消费者组表中
             ConsumerGroupInfo prev = this.consumerTable.putIfAbsent(group, tmp);
             consumerGroupInfo = prev != null ? prev : tmp;
         }
 
+        //TODO:更新channel,实际上就是保存消费者组下的消费者，第一次发起心跳的时候肯定返回的是true
         boolean r1 =
             consumerGroupInfo.updateChannel(clientChannelInfo, consumeType, messageModel,
                 consumeFromWhere);
+        //TODO:订阅信息是否变更
         boolean r2 = consumerGroupInfo.updateSubscription(subList);
 
         if (r1 || r2) {

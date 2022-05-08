@@ -55,6 +55,7 @@ public class ClientManageProcessor extends AsyncNettyRequestProcessor implements
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request)
         throws RemotingCommandException {
         switch (request.getCode()) {
+            //TODO:接收客户端心跳指令,保存客户端信息
             case RequestCode.HEART_BEAT:
                 return this.heartBeat(ctx, request);
             case RequestCode.UNREGISTER_CLIENT:
@@ -75,14 +76,18 @@ public class ClientManageProcessor extends AsyncNettyRequestProcessor implements
     public RemotingCommand heartBeat(ChannelHandlerContext ctx, RemotingCommand request) {
         RemotingCommand response = RemotingCommand.createResponseCommand(null);
         HeartbeatData heartbeatData = HeartbeatData.decode(request.getBody(), HeartbeatData.class);
+
+        //TODO:一个消费者组下的消费者对应一个ClientChannelInfo
         ClientChannelInfo clientChannelInfo = new ClientChannelInfo(
             ctx.channel(),
+            //TODO:消费者组下的每个消费者clientId都不同，用来区分同一个消费者组下的不同消费者
             heartbeatData.getClientID(),
             request.getLanguage(),
             request.getVersion()
         );
 
         for (ConsumerData data : heartbeatData.getConsumerDataSet()) {
+            //TODO:获取订阅组配置并持久化
             SubscriptionGroupConfig subscriptionGroupConfig =
                 this.brokerController.getSubscriptionGroupManager().findSubscriptionGroupConfig(
                     data.getGroupName());
@@ -100,6 +105,7 @@ public class ClientManageProcessor extends AsyncNettyRequestProcessor implements
                     PermName.PERM_WRITE | PermName.PERM_READ, topicSysFlag);
             }
 
+            //TODO:注册消费者
             boolean changed = this.brokerController.getConsumerManager().registerConsumer(
                 data.getGroupName(),
                 clientChannelInfo,

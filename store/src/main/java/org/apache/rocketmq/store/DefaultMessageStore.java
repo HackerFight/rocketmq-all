@@ -583,6 +583,7 @@ public class DefaultMessageStore implements MessageStore {
         long minOffset = 0;
         long maxOffset = 0;
 
+        //TODO:创建保存消息的容器
         GetMessageResult getResult = new GetMessageResult();
 
         final long maxOffsetPy = this.commitLog.getMaxOffset();
@@ -593,7 +594,7 @@ public class DefaultMessageStore implements MessageStore {
         // 一个 MappedFileQueue 对应多个 MappedFile
         ConsumeQueue consumeQueue = findConsumeQueue(topic, queueId);
         if (consumeQueue != null) {
-            //TODO: 队列中保存了最大，最小 offset
+            //TODO: 队列中保存了最大，最小 offset，将会设置到 GetMessageResult 容器中
             minOffset = consumeQueue.getMinOffsetInQueue();
             maxOffset = consumeQueue.getMaxOffsetInQueue();
 
@@ -617,7 +618,8 @@ public class DefaultMessageStore implements MessageStore {
 
                 //TODO: 从 consumequeue 中读取索引数据
                 //TODO: 这个和消息分发 ReputMessageService 从 commitlog 中读取消息是一样的
-                //TODO: 第一次 offset=0, 从 consumequeue中读取多少消息呢？
+                //TODO: 第一次 offset=0
+                //TODO: 从 consumequeue中读取多少消息呢？
                 //TODO: 在数据分发后，MappedFile wrotePosition 会记录写入的位置（就是记录写到哪里了）
                 SelectMappedBufferResult bufferConsumeQueue = consumeQueue.getIndexBuffer(offset);
                 if (bufferConsumeQueue != null) {
@@ -629,7 +631,6 @@ public class DefaultMessageStore implements MessageStore {
 
                         int i = 0;
 
-                        //TODO: pullBatchSize(32) 好像并没有用, 只有当 pullBatchSize > 800 时才有用？
                         final int maxFilterMessageCount = Math.max(16000, maxMsgNums * ConsumeQueue.CQ_STORE_UNIT_SIZE);
                         final boolean diskFallRecorded = this.messageStoreConfig.isDiskFallRecorded();
                         ConsumeQueueExt.CqExtUnit cqExtUnit = new ConsumeQueueExt.CqExtUnit();
@@ -638,9 +639,8 @@ public class DefaultMessageStore implements MessageStore {
                         //TODO: bufferConsumeQueue.getSize()  就是consumequeue 中的消息索引单元的总size(size/20 = 索引个数)
                         //TODO: 每20个字节往前推
                         for (; i < bufferConsumeQueue.getSize() && i < maxFilterMessageCount; i += ConsumeQueue.CQ_STORE_UNIT_SIZE) {
-                            //TODO: 消息偏移量
+                            //TODO: 一个索引单元包含三个元素：消息偏移量,消息大小,消息tag的hashcode
                             long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();
-                            //TODO: 消息大小
                             int sizePy = bufferConsumeQueue.getByteBuffer().getInt();
                             long tagsCode = bufferConsumeQueue.getByteBuffer().getLong();
 
@@ -655,6 +655,7 @@ public class DefaultMessageStore implements MessageStore {
 
                             boolean isInDisk = checkInDiskByCommitOffset(offsetPy, maxOffsetPy);
 
+                            //TODO: pullBatchSize 在这里会真正的生效，当读取到32条消息之后，他就会跳出循环
                             if (this.isTheBatchFull(sizePy, maxMsgNums, getResult.getBufferTotalSize(), getResult.getMessageCount(),
                                 isInDisk)) {
                                 break;
@@ -683,7 +684,7 @@ public class DefaultMessageStore implements MessageStore {
                             }
 
 
-                            //TODO: 从commitlog 读取消息
+                            //TODO: 从commitlog 读取消息，一次读取一条消息
                             SelectMappedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
                             if (null == selectResult) {
                                 if (getResult.getBufferTotalSize() == 0) {
