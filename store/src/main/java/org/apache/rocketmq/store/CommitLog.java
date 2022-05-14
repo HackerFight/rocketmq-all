@@ -77,9 +77,12 @@ public class CommitLog {
             defaultMessageStore.getMessageStoreConfig().getMappedFileSizeCommitLog(), defaultMessageStore.getAllocateMappedFileService());
         this.defaultMessageStore = defaultMessageStore;
 
+        //TODO:创建刷盘服务
         if (FlushDiskType.SYNC_FLUSH == defaultMessageStore.getMessageStoreConfig().getFlushDiskType()) {
+            //TODO:同步刷盘
             this.flushCommitLogService = new GroupCommitService();
         } else {
+            //TODO:异步刷盘
             this.flushCommitLogService = new FlushRealTimeService();
         }
 

@@ -268,6 +268,7 @@ public class DefaultMessageStore implements MessageStore {
             log.info("[SetReputOffset] maxPhysicalPosInLogicQueue={} clMinOffset={} clMaxOffset={} clConfirmedOffset={}",
                 maxPhysicalPosInLogicQueue, this.commitLog.getMinOffset(), this.commitLog.getMaxOffset(), this.commitLog.getConfirmOffset());
             this.reputMessageService.setReputFromOffset(maxPhysicalPosInLogicQueue);
+            //TODO:启动消息分发服务
             this.reputMessageService.start();
 
             /**
@@ -281,19 +282,29 @@ public class DefaultMessageStore implements MessageStore {
                 Thread.sleep(1000);
                 log.info("Try to finish doing reput the messages fall behind during the starting, reputOffset={} maxOffset={} behind={}", this.reputMessageService.getReputFromOffset(), this.getMaxPhyOffset(), this.dispatchBehindBytes());
             }
+
+            //TODO:恢复commitlog对象中的consumequeue offset 表的数据
+            //TODO: HashMap<String/* topic-queueid */, Long/* offset */> topicQueueTable
             this.recoverTopicQueueTable();
         }
 
         if (!messageStoreConfig.isEnableDLegerCommitLog()) {
+            //TODO:启动高可用服务
             this.haService.start();
+            //TODO:如果是Master机器，则启动延迟消息服务
             this.handleScheduleMessageService(messageStoreConfig.getBrokerRole());
         }
 
+        //TODO:启动consumequeue刷盘服务
         this.flushConsumeQueueService.start();
+        //TODO:启动commmitlog刷盘服务
         this.commitLog.start();
+        //TODO:启动采样服务
         this.storeStatsService.start();
 
+        //TODO:创建 abort文件，关闭broker时删除。（存储路径默认：$user.home/store/abort
         this.createTempFile();
+        //TODO:添加定时任务，比如到期删除过期文件，比如检查磁盘使用请情况
         this.addScheduleTask();
         this.shutdown = false;
     }
