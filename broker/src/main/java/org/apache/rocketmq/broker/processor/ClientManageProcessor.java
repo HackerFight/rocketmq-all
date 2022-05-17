@@ -55,7 +55,7 @@ public class ClientManageProcessor extends AsyncNettyRequestProcessor implements
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request)
         throws RemotingCommandException {
         switch (request.getCode()) {
-            //TODO:接收客户端心跳指令,保存客户端信息
+            //TODO:接收客户端(producer/consumer)心跳指令,保存客户端信息
             case RequestCode.HEART_BEAT:
                 return this.heartBeat(ctx, request);
             case RequestCode.UNREGISTER_CLIENT:
@@ -73,19 +73,29 @@ public class ClientManageProcessor extends AsyncNettyRequestProcessor implements
         return false;
     }
 
+    /**
+     * 生产者和消费者都会发送心跳
+     * @param ctx
+     * @param request
+     * @return
+     */
     public RemotingCommand heartBeat(ChannelHandlerContext ctx, RemotingCommand request) {
         RemotingCommand response = RemotingCommand.createResponseCommand(null);
         HeartbeatData heartbeatData = HeartbeatData.decode(request.getBody(), HeartbeatData.class);
 
         //TODO:一个消费者组下的消费者对应一个ClientChannelInfo
+        //TODO:一个生产者组下的生产者对应一个ClientChannelInfo
         ClientChannelInfo clientChannelInfo = new ClientChannelInfo(
             ctx.channel(),
             //TODO:消费者组下的每个消费者clientId都不同，用来区分同一个消费者组下的不同消费者
+            //TODO:生产者组下的每个生产者clientId都不同，用来区分同一个生产者组下的不同生产者
             heartbeatData.getClientID(),
             request.getLanguage(),
             request.getVersion()
         );
 
+
+        //TODO:如果getConsumerDataSet()不为空，说明是消费者发送的心跳
         for (ConsumerData data : heartbeatData.getConsumerDataSet()) {
             //TODO:获取订阅组配置并持久化
             SubscriptionGroupConfig subscriptionGroupConfig =
@@ -124,6 +134,8 @@ public class ClientManageProcessor extends AsyncNettyRequestProcessor implements
             }
         }
 
+
+        //TODO：如果getProducerDataSet() 不为空，说明是producer发送的心跳
         for (ProducerData data : heartbeatData.getProducerDataSet()) {
             this.brokerController.getProducerManager().registerProducer(data.getGroupName(),
                 clientChannelInfo);
