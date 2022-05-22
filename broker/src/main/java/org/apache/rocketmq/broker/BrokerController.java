@@ -870,7 +870,7 @@ public class BrokerController {
         }
 
         if (this.pullRequestHoldService != null) {
-            this.pullRequestHoldService.start();
+            //this.pullRequestHoldService.start();
         }
 
         if (this.clientHousekeepingService != null) {

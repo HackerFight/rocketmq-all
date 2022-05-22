@@ -147,6 +147,9 @@ public class PullRequestHoldService extends ServiceThread {
                         }
                     }
 
+                    //TODO: request.getSuspendTimestamp() 挂起时间，默认是15s
+                    //TODO: request.getTimeoutMillis() 是构建PullRequest对象时的时间
+                    //TODO: 如果时间到了，也去唤醒
                     if (System.currentTimeMillis() >= (request.getSuspendTimestamp() + request.getTimeoutMillis())) {
                         try {
                             this.brokerController.getPullMessageProcessor().executeRequestWhenWakeup(request.getClientChannel(),

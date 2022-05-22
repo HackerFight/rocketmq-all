@@ -969,10 +969,12 @@ public class MQClientInstance {
     }
 
     public void doRebalance() {
+        //TODO:其实这个 consumerTable 里有一个实例，就是当前启动的消费者
         for (Map.Entry<String, MQConsumerInner> entry : this.consumerTable.entrySet()) {
             MQConsumerInner impl = entry.getValue();
             if (impl != null) {
                 try {
+                    //TODO:当前实例完成重平衡，再次证明，重平衡是consumer客户端完成的
                     impl.doRebalance();
                 } catch (Throwable e) {
                     log.error("doRebalance exception", e);

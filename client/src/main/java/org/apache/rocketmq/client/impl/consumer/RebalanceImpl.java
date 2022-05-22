@@ -215,21 +215,21 @@ public abstract class RebalanceImpl {
     }
 
     public void doRebalance(final boolean isOrder) {
-        Map<String, SubscriptionData> subTable = this.getSubscriptionInner();
-        if (subTable != null) {
-            for (final Map.Entry<String, SubscriptionData> entry : subTable.entrySet()) {
-                final String topic = entry.getKey();
-                try {
-                    this.rebalanceByTopic(topic, isOrder);
-                } catch (Throwable e) {
-                    if (!topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
-                        log.warn("rebalanceByTopic Exception", e);
+            Map<String, SubscriptionData> subTable = this.getSubscriptionInner();
+            if (subTable != null) {
+                for (final Map.Entry<String, SubscriptionData> entry : subTable.entrySet()) {
+                    final String topic = entry.getKey();
+                    try {
+                        this.rebalanceByTopic(topic, isOrder);
+                    } catch (Throwable e) {
+                        if (!topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
+                            log.warn("rebalanceByTopic Exception", e);
+                        }
                     }
                 }
             }
-        }
 
-        this.truncateMessageQueueNotMyTopic();
+            this.truncateMessageQueueNotMyTopic();
     }
 
     public ConcurrentMap<String, SubscriptionData> getSubscriptionInner() {
