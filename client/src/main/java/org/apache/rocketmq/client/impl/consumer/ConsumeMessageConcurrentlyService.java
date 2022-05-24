@@ -394,6 +394,10 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
 
         @Override
         public void run() {
+
+            //TODO:如果dropped=true,直接丢弃，不消费消息；重平衡时，如果当前消费者不在消费这个队列了，就会设置为true
+            //TODO:注意：如果dropped=true,说明这个queue不在属于当前消费者，经过重平衡后分给了其他消费者
+            //TODO:如果走到了这里发生了重平衡将dropped设置为true,不知道算不算消费暂停
             if (this.processQueue.isDropped()) {
                 log.info("the message queue not be able to consume, because it's dropped. group={} {}", ConsumeMessageConcurrentlyService.this.consumerGroup, this.messageQueue);
                 return;
@@ -470,6 +474,9 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
             ConsumeMessageConcurrentlyService.this.getConsumerStatsManager()
                 .incConsumeRT(ConsumeMessageConcurrentlyService.this.consumerGroup, messageQueue.getTopic(), consumeRT);
 
+            //TODO:如果dropped=true,说明经过经过重平衡后，这个队列不属于当前消费者了，所以不去处理消费结果
+            //TODO:注意：走到这里，说明消费者已经消费完了，但是并不去处理消费结果，也就是不去更新消费偏移量offset
+            //TODO:这就导致，其他消费者就还会读取到之前的offset,然后消费，这样就产生了重复消费
             if (!processQueue.isDropped()) {
                 ConsumeMessageConcurrentlyService.this.processConsumeResult(status, context, this);
             } else {

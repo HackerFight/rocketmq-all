@@ -217,6 +217,8 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
      */
     public void pullMessage(final PullRequest pullRequest) {
         final ProcessQueue processQueue = pullRequest.getProcessQueue();
+
+        //TODO:如果dropped=true,直接丢弃，重平衡时，如果当前消费者不在消费这个队列了，就会设置为true
         if (processQueue.isDropped()) {
             log.info("the pull request[{}] is dropped.", pullRequest.toString());
             return;
